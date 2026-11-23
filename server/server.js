@@ -115,7 +115,7 @@ const startServer = async () => {
 };
 
 // Start server locally (on Vercel serverless, the middleware awaits connectDB per request)
-if (!process.env.VERCEL) {
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'test') {
   startServer();
 }
 

@@ -1,0 +1,43 @@
+name: EC4206 QA Automation & CI Pipeline
+
+on:
+  push:
+    branches: [ main, member1-automation-cicd-sonar ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-api-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd mongosh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Server Dependencies
+        working-directory: ./server
+        run: npm install
+
+      - name: Run Automated API Tests
+        working-directory: ./server
+        env:
+          PORT: 5000
+          MONGO_URI: mongodb://127.0.0.1:27017/cylixlab_test
+          JWT_SECRET: ${{ secrets.JWT_SECRET || '89cb9604f63d8f8ef23470490a77a592ab90a570d2d3d36aa5e202883318159e71db05f335eafd2a4f196fb344cc39205e95fdeb331b5a73b46fdd54c13e5945' }}
+        run: npm test
