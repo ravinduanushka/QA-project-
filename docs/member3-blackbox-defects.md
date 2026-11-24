@@ -307,6 +307,8 @@ Two significant defects were analysed: one Critical security defect (DEF-05) and
 - Add "every POST/PUT/DELETE route has auth middleware" to the Pull Request review checklist.
 - Lesson from the Knight Capital case (2012): unused code still runs in production and can cause serious failures.
 
+![RCA comment on #11](../report-screenshots/3.8_RCA_Issue11_Comment.png)
+
 #### RCA 2: DEF-03 – Register API accepts password shorter than 6 characters ([#9](https://github.com/ravinduanushka/QA-project-/issues/9))
 
 **Problem statement:** The register form rejects a 5-character password, but a direct API call (`POST /api/auth/register`) accepts it and creates the account.
@@ -328,6 +330,8 @@ Two significant defects were analysed: one Critical security defect (DEF-05) and
 - Validate every input on the server (for example with a shared schema using Joi or express-validator) and keep the frontend check only for user experience.
 - Add API tests for the password boundaries 5 / 6 / 7 (BVA-P1 to BVA-P3) to the CI pipeline.
 - Add "server-side validation" to the acceptance criteria of user stories.
+
+![RCA comment on #9](../report-screenshots/3.8_RCA_Issue9_Comment.png)
 
 #### Fishbone (Ishikawa) Diagram – DEF-03
 ```mermaid
