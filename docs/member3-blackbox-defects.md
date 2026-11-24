@@ -349,3 +349,42 @@ flowchart LR
 All six defects share the same root cause: **the backend trusts client input.**
 - Validation exists only in the UI (DEF-01 to DEF-04).
 - Access control or input sanitisation is missing (DEF-05, DEF-06).
+
+### 4. Bug Lifecycle – DEF-03 ([#9](https://github.com/ravinduanushka/QA-project-/issues/9))
+DEF-03 was taken through the complete bug lifecycle. Each stage is recorded on the GitHub issue as a `status:*` label change plus a comment, so the issue timeline is the audit trail.
+
+`New → Assigned → In Progress → Fixed → Retest (Verified) → Closed`
+
+| Stage | Action taken | Evidence |
+|---|---|---|
+| 1. New | Defect found by EP-P2 / BVA-P1 and logged as issue #9 with severity, steps, expected vs. actual and screenshots. Label `status:new`. | `3.8_Lifecycle_1_New.png` |
+| 2. Assigned | Issue assigned to Member 3. Label changed to `status:assigned`. | `3.8_Lifecycle_2_Assigned.png` |
+| 3. In Progress | Fix started on branch `member3-blackbox-defects`. Label changed to `status:in-progress`. | `3.8_Lifecycle_3_InProgress.png` |
+| 4. Fixed | Server-side check added in `registerUser` (`authController.js`): passwords shorter than 6 characters return 400. Regression tests added in `server/tests/member3.defects.test.js` (24/24 tests pass). Commit `450aaa7`. Label changed to `status:fixed`. | `3.8_Lifecycle_Fix_Tests_Pass.png`, `3.8_Lifecycle_4_Fixed.png` |
+| 5. Retest (Verified) | BVA-P1 re-run: 5-character password now returns 400. BVA-P2 re-run: 6-character password still returns 201. Label changed to `status:retest`. | `3.8_Lifecycle_5_Retest_API_5chars_400.png`, `3.8_Lifecycle_5_Retest_API_6chars_201.png`, `3.8_Lifecycle_5_Retest.png` |
+| 6. Closed | Pull Request with `Fixes #9` merged into `main` after the CI pipeline passed. GitHub closed the issue automatically. Label changed to `status:closed`. | `3.8_Lifecycle_6_Closed.png` |
+
+**The fix**
+```js
+if (password.length < 6) {
+  return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+}
+```
+
+**Stage 1 – New**
+![Lifecycle New](../report-screenshots/3.8_Lifecycle_1_New.png)
+
+**Stage 2 – Assigned**
+![Lifecycle Assigned](../report-screenshots/3.8_Lifecycle_2_Assigned.png)
+
+**Stage 3 – In Progress**
+![Lifecycle In Progress](../report-screenshots/3.8_Lifecycle_3_InProgress.png)
+
+**Stage 4 – Fixed (regression tests pass)**
+![Lifecycle Fix Tests Pass](../report-screenshots/3.8_Lifecycle_Fix_Tests_Pass.png)
+![Lifecycle Fixed](../report-screenshots/3.8_Lifecycle_4_Fixed.png)
+
+**Stage 5 – Retest (Verified)**
+![Retest 5 chars 400](../report-screenshots/3.8_Lifecycle_5_Retest_API_5chars_400.png)
+![Retest 6 chars 201](../report-screenshots/3.8_Lifecycle_5_Retest_API_6chars_201.png)
+![Lifecycle Retest](../report-screenshots/3.8_Lifecycle_5_Retest.png)
