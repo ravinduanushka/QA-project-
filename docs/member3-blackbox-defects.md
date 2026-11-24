@@ -194,3 +194,59 @@ Tool: Postman Collection Runner – `POST /api/auth/login` with a wrong password
 - **DEF-03 (confirmed again):** The API accepts a 5-character password (BVA-P1), while the UI correctly rejects it. This confirms that password length is validated only on the client side.
 
 **Observation:** The login rate limiter works exactly at its boundary. Attempts 1–60 are processed, and attempt 61 is blocked with HTTP 429.
+
+### 3. Decision Table Testing
+
+#### Feature: Update Course – `PUT /api/courses/:id` (protected by `protect` + `authorize('instructor','admin')`)
+
+| Conditions / Actions | R1 | R2 | R3 | R4 |
+|---|---|---|---|---|
+| C1: Token sent? | No | Yes | Yes | Yes |
+| C2: Token valid? | – | No | Yes | Yes |
+| C3: Role is admin/instructor? | – | – | No (student) | Yes (admin) |
+| **Expected action** | 401 Not authorized | 401 Not authorized | 403 Forbidden | 200 Course updated |
+| **Actual result** | 401 – Not authorized to access this route | 401 – Not authorized to access this route | 403 – User role 'student' is not authorized to access this route | 200 – title changed to "DT Updated Title" |
+| **Status** | Pass | Pass | Pass | Pass |
+
+*Note: A dedicated test admin account was configured in the local test environment (`server/.env`) for rule R4. Production admin credentials were not used.*
+
+**R1 – No token (Pass)**
+![DT R1 No Token Pass](../report-screenshots/3.3_DT_R1_NoToken_Pass.png)
+
+**R2 – Invalid token (Pass)**
+![DT R2 Invalid Token Pass](../report-screenshots/3.3_DT_R2_InvalidToken_Pass.png)
+
+**R3 – Student token (Pass)**
+![DT R3 Student Token Pass](../report-screenshots/3.3_DT_R3_StudentToken_Pass.png)
+
+**R4 – Admin token (Pass)**
+![DT R4 Admin Token Pass](../report-screenshots/3.3_DT_R4_AdminToken_Pass.png)
+
+#### Additional Access-Control Rules (endpoints that should also be protected)
+| Rule | Request | Token | Expected | Actual | Status |
+|---|---|---|---|---|---|
+| R5 | `POST /api/courses` (create course) | None | 401 Not authorized | 201 Created – "Course created successfully!" | Fail |
+| R6a | `GET /api/courses/student-submissions?studentEmail=studentA@test.com` | None | Only Student A's submission | 200 OK – only Student A's submission returned | Pass |
+| R6b | `GET /api/courses/student-submissions?studentEmail=.*` | None | Empty list (".*" is not a real email) | 200 OK – submissions of other students returned | Fail |
+
+**R5 – Create course without token (Fail)**
+![DT R5 Create Course No Token Fail](../report-screenshots/3.3_DT_R5_CreateCourse_NoToken_Fail.png)
+
+**R6a – Own submissions (Pass)**
+![DT R6a Own Submissions](../report-screenshots/3.3_DT_R6a_OwnSubmissions_Pass.png)
+
+**R6b – Regex wildcard returns other students' data (Fail)**
+![DT R6b Regex Wildcard Fail](../report-screenshots/3.3_DT_R6b_RegexWildcard_Fail.png)
+
+#### Decision Table Summary
+| Group | Rules | Pass | Fail |
+|---|---|---|---|
+| Update course (R1–R4) | 4 | 4 | 0 |
+| Additional rules (R5, R6a, R6b) | 3 | 1 | 2 |
+| **Total** | **7** | **5** | **2** |
+
+**Defects found by Decision Table:**
+- **DEF-05 (Critical – Broken Access Control):** `POST /api/courses` has no `protect`/`authorize` middleware, so anyone can create a course without logging in (R5). PUT and DELETE on the same resource are protected correctly (R1–R4).
+- **DEF-06 (Critical – Injection / Data Exposure):** `GET /api/courses/student-submissions` builds a regular expression directly from the `studentEmail` query value without escaping it. The value `.*` matches every student, and the endpoint needs no login, so any visitor can read all students' marks (R6b).
+
+**Observation:** The update-course endpoint enforces authentication and role-based authorization correctly for all four condition combinations.
