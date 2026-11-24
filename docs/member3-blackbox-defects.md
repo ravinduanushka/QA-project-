@@ -339,6 +339,7 @@ flowchart LR
     P5["Environment: API can be called directly with Postman / curl, bypassing the UI"] --> D
     D(["DEF-03: API accepts password shorter than 6 characters"])
 ```
+![Fishbone DEF-03](../report-screenshots/3.8_RCA_Fishbone_DEF03.png)
 
 #### Common Pattern Across All Defects
 All six defects share the same root cause: **the backend trusts client input.**
