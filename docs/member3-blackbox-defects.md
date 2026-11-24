@@ -87,3 +87,29 @@ Tool: Postman (Body → raw → JSON). Only one field is changed per test; all o
 - **DEF-03:** Register API accepts a password shorter than 6 characters (EP-P2). The minimum length check exists only in the frontend (`Register.jsx`), not in the backend (`authController.js`).
 
 **Observation:** The role field is handled correctly. Any role other than `student` or `parent` is replaced with `student`, so a user cannot register as `admin`.
+
+### 2. Boundary Value Analysis (BVA)
+
+#### BVA 1: Age (allowed range 4–120)
+| TC ID | Value | Position | Expected | Actual (UI) | Actual (API) | Status |
+|---|---|---|---|---|---|---|
+| BVA-A1 | 3 | Min - 1 | Rejected | | | |
+| BVA-A2 | 4 | Min | Accepted | | | |
+| BVA-A3 | 5 | Min + 1 | Accepted | | | |
+| BVA-A4 | 119 | Max - 1 | Accepted | | | |
+| BVA-A5 | 120 | Max | Accepted | | | |
+| BVA-A6 | 121 | Max + 1 | Rejected | | | |
+
+#### BVA 2: Password length (minimum 6)
+| TC ID | Value | Length | Expected | Actual (UI) | Actual (API) | Status |
+|---|---|---|---|---|---|---|
+| BVA-P1 | abcd1 | 5 (Min - 1) | Rejected | | | |
+| BVA-P2 | abcd12 | 6 (Min) | Accepted | | | |
+| BVA-P3 | abcd123 | 7 (Min + 1) | Accepted | | | |
+
+#### BVA 3: Login rate limit (max 60 attempts / 15 min)
+| TC ID | Attempt No. | Expected | Actual | Status |
+|---|---|---|---|---|
+| BVA-L1 | 59 | 400 Invalid Credentials | | |
+| BVA-L2 | 60 (Max) | 400 Invalid Credentials | | |
+| BVA-L3 | 61 (Max + 1) | 429 Too Many Requests | | |
