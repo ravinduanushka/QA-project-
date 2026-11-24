@@ -269,7 +269,7 @@ Tool: Postman Collection Runner – `POST /api/auth/login` with a wrong password
 |---|---|---|---|---|---|---|
 | DEF-01 | [#7](https://github.com/ravinduanushka/QA-project-/issues/7) | Register API accepts email without "@" | EP-E2 | Major | Medium | New |
 | DEF-02 | [#8](https://github.com/ravinduanushka/QA-project-/issues/8) | Register API accepts email without domain | EP-E3 | Major | Medium | New |
-| DEF-03 | [#9](https://github.com/ravinduanushka/QA-project-/issues/9) | Register API accepts password shorter than 6 characters | EP-P2, BVA-P1 | Major | High | New |
+| DEF-03 | [#9](https://github.com/ravinduanushka/QA-project-/issues/9) | Register API accepts password shorter than 6 characters | EP-P2, BVA-P1 | Major | High | Closed |
 | DEF-04 | [#10](https://github.com/ravinduanushka/QA-project-/issues/10) | Age outside 4–120 accepted by UI and API | BVA-A1, BVA-A6 | Minor | Low | New |
 | DEF-05 | [#11](https://github.com/ravinduanushka/QA-project-/issues/11) | Anyone can create a course without login | Decision Table R5 | Critical | High | New |
 | DEF-06 | [#12](https://github.com/ravinduanushka/QA-project-/issues/12) | Student submissions endpoint leaks all students' marks | Decision Table R6b | Critical | High | New |
@@ -388,3 +388,21 @@ if (password.length < 6) {
 ![Retest 5 chars 400](../report-screenshots/3.8_Lifecycle_5_Retest_API_5chars_400.png)
 ![Retest 6 chars 201](../report-screenshots/3.8_Lifecycle_5_Retest_API_6chars_201.png)
 ![Lifecycle Retest](../report-screenshots/3.8_Lifecycle_5_Retest.png)
+
+**Stage 6 – Closed (PR merged after CI passed)**
+![PR CI Pass](../report-screenshots/3.8_Lifecycle_6_PR_CI_Pass.png)
+![Lifecycle Closed](../report-screenshots/3.8_Lifecycle_6_Closed.png)
+
+---
+
+## Member 3 – Summary of Deliverables
+| Task (from the assignment task list) | Where it is covered | Status |
+|---|---|---|
+| 3.3 Apply Equivalence Partitioning on 2–3 fields | EP on Email, Password, Role – 12 test cases | Done |
+| 3.3 Apply Boundary Value Analysis on numeric fields | BVA on Age, Password length, Login rate limit – 21 checks (API + UI) | Done |
+| 3.3 Build a decision table | Update-course access control (R1–R4) + extra rules R5, R6 | Done |
+| 3.8 Log bugs into GitHub Issues | 6 defects logged as issues #7–#12 with severity, steps and evidence | Done |
+| 3.8 Root Cause Analysis on 1–2 bugs | 5 Whys for DEF-05 and DEF-03, Fishbone for DEF-03 | Done |
+| 3.8 Document the full bug lifecycle | DEF-03 (#9): New → Assigned → In Progress → Fixed → Retest → Closed | Done |
+
+**Totals:** 40 black-box checks executed, 6 defects found (2 Critical, 3 Major, 1 Minor), 1 defect fixed and verified with automated regression tests.
