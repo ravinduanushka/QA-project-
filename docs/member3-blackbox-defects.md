@@ -89,27 +89,108 @@ Tool: Postman (Body → raw → JSON). Only one field is changed per test; all o
 **Observation:** The role field is handled correctly. Any role other than `student` or `parent` is replaced with `student`, so a user cannot register as `admin`.
 
 ### 2. Boundary Value Analysis (BVA)
+Boundary values are tested at min − 1, min, min + 1 and max − 1, max, max + 1.
+Each value is tested on the API (Postman) and on the UI (Register page in Chrome).
 
-#### BVA 1: Age (allowed range 4–120)
-| TC ID | Value | Position | Expected | Actual (UI) | Actual (API) | Status |
-|---|---|---|---|---|---|---|
-| BVA-A1 | 3 | Min - 1 | Rejected | | | |
-| BVA-A2 | 4 | Min | Accepted | | | |
-| BVA-A3 | 5 | Min + 1 | Accepted | | | |
-| BVA-A4 | 119 | Max - 1 | Accepted | | | |
-| BVA-A5 | 120 | Max | Accepted | | | |
-| BVA-A6 | 121 | Max + 1 | Rejected | | | |
 
-#### BVA 2: Password length (minimum 6)
-| TC ID | Value | Length | Expected | Actual (UI) | Actual (API) | Status |
-|---|---|---|---|---|---|---|
-| BVA-P1 | abcd1 | 5 (Min - 1) | Rejected | | | |
-| BVA-P2 | abcd12 | 6 (Min) | Accepted | | | |
-| BVA-P3 | abcd123 | 7 (Min + 1) | Accepted | | | |
+#### BVA 1: Student Age (valid range 4–120)
+| TC ID | Value | Boundary | Expected | Actual (API) | API Status | Actual (UI) | UI Status |
+|---|---|---|---|---|---|---|---|
+| BVA-A1 | 3 | Min − 1 | Rejected | 201 Created – age 3 saved | Fail | Accepted – "Registration successful!" | Fail |
+| BVA-A2 | 4 | Min | Accepted | 201 Created – age 4 saved | Pass | Accepted – "Registration successful!" | Pass |
+| BVA-A3 | 5 | Min + 1 | Accepted | 201 Created – age 5 saved | Pass | Accepted – "Registration successful!" | Pass |
+| BVA-A4 | 119 | Max − 1 | Accepted | 201 Created – age 119 saved | Pass | Accepted – "Registration successful!" | Pass |
+| BVA-A5 | 120 | Max | Accepted | 201 Created – age 120 saved | Pass | Accepted – "Registration successful!" | Pass |
+| BVA-A6 | 121 | Max + 1 | Rejected | 201 Created – age 121 saved | Fail | Accepted – "Registration successful!" | Fail |
 
-#### BVA 3: Login rate limit (max 60 attempts / 15 min)
-| TC ID | Attempt No. | Expected | Actual | Status |
-|---|---|---|---|---|
-| BVA-L1 | 59 | 400 Invalid Credentials | | |
-| BVA-L2 | 60 (Max) | 400 Invalid Credentials | | |
-| BVA-L3 | 61 (Max + 1) | 429 Too Many Requests | | |
+**BVA-A1 – Age 3 (API, Fail)**
+![BVA-A1 API Age 3 Fail](../report-screenshots/3.3_BVA_Age_API_3_Fail.png)
+
+**BVA-A1 – Age 3 (UI, Fail)**
+![BVA-A1 UI Age 3 Fail](../report-screenshots/3.3_BVA_Age_UI_3_Fail.png)
+
+**BVA-A2 – Age 4 (API, Pass)**
+![BVA-A2 API Age 4 Pass](../report-screenshots/3.3_BVA_Age_API_4_Pass.png)
+
+**BVA-A2 – Age 4 (UI, Pass)**
+![BVA-A2 UI Age 4 Pass](../report-screenshots/3.3_BVA_Age_UI_4_Pass.png)
+
+**BVA-A3 – Age 5 (API, Pass)**
+![BVA-A3 API Age 5 Pass](../report-screenshots/3.3_BVA_Age_API_5_Pass.png)
+
+**BVA-A3 – Age 5 (UI, Pass)**
+![BVA-A3 UI Age 5 Pass](../report-screenshots/3.3_BVA_Age_UI_5_Pass.png)
+
+**BVA-A4 – Age 119 (API, Pass)**
+![BVA-A4 API Age 119 Pass](../report-screenshots/3.3_BVA_Age_API_119_Pass.png)
+
+**BVA-A4 – Age 119 (UI, Pass)**
+![BVA-A4 UI Age 119 Pass](../report-screenshots/3.3_BVA_Age_UI_119_Pass.png)
+
+**BVA-A5 – Age 120 (API, Pass)**
+![BVA-A5 API Age 120 Pass](../report-screenshots/3.3_BVA_Age_API_120_Pass.png)
+
+**BVA-A5 – Age 120 (UI, Pass)**
+![BVA-A5 UI Age 120 Pass](../report-screenshots/3.3_BVA_Age_UI_120_Pass.png)
+
+**BVA-A6 – Age 121 (API, Fail)**
+![BVA-A6 API Age 121 Fail](../report-screenshots/3.3_BVA_Age_API_121_Fail.png)
+
+**BVA-A6 – Age 121 (UI, Fail)**
+![BVA-A6 UI Age 121 Fail](../report-screenshots/3.3_BVA_Age_UI_121_Fail.png)
+
+#### BVA 2: Password Length (minimum 6 characters)
+| TC ID | Value | Length | Expected | Actual (API) | API Status | Actual (UI) | UI Status |
+|---|---|---|---|---|---|---|---|
+| BVA-P1 | abcd1 | 5 (Min − 1) | Rejected | 201 Created – Registration successful | Fail | Rejected – "Password must be at least 6 characters." | Pass |
+| BVA-P2 | abcd12 | 6 (Min) | Accepted | 201 Created – Registration successful | Pass | Accepted – "Registration successful!" | Pass |
+| BVA-P3 | abcd123 | 7 (Min + 1) | Accepted | 201 Created – Registration successful | Pass | Accepted – "Registration successful!" | Pass |
+
+**BVA-P1 – 5 characters (API, Fail)**
+![BVA-P1 API 5 chars Fail](../report-screenshots/3.3_BVA_Password_API_5_Fail.png)
+
+**BVA-P1 – 5 characters (UI, Pass)**
+![BVA-P1 UI 5 chars Pass](../report-screenshots/3.3_BVA_Password_UI_5_Pass.png)
+
+**BVA-P2 – 6 characters (API, Pass)**
+![BVA-P2 API 6 chars Pass](../report-screenshots/3.3_BVA_Password_API_6_Pass.png)
+
+**BVA-P2 – 6 characters (UI, Pass)**
+![BVA-P2 UI 6 chars Pass](../report-screenshots/3.3_BVA_Password_UI_6_Pass.png)
+
+**BVA-P3 – 7 characters (API, Pass)**
+![BVA-P3 API 7 chars Pass](../report-screenshots/3.3_BVA_Password_API_7_Pass.png)
+
+**BVA-P3 – 7 characters (UI, Pass)**
+![BVA-P3 UI 7 chars Pass](../report-screenshots/3.3_BVA_Password_UI_7_Pass.png)
+
+#### BVA 3: Login Rate Limit (maximum 60 attempts per 15 minutes per IP)
+Tool: Postman Collection Runner – `POST /api/auth/login` with a wrong password, 61 iterations, 0 ms delay (server restarted first so the counter starts at 0).
+
+| TC ID | Attempt No. | Boundary | Expected | Actual | Status |
+|---|---|---|---|---|---|
+| BVA-L1 | 59 | Max − 1 | 400 Invalid Credentials | 400 – Invalid Credentials | Pass |
+| BVA-L2 | 60 | Max | 400 Invalid Credentials | 400 – Invalid Credentials | Pass |
+| BVA-L3 | 61 | Max + 1 | 429 Too Many Requests | 429 – Too many authentication attempts from this IP, please try again after 15 minutes. | Pass |
+
+**BVA-L2 – Attempt 60 returns 400 (Pass)**
+![BVA-L2 Attempt 60 Pass](../report-screenshots/3.3_BVA_RateLimit_60_Pass.png)
+
+**BVA-L3 – Attempt 61 returns 429 (Pass)**
+![BVA-L3 Attempt 61 Pass](../report-screenshots/3.3_BVA_RateLimit_61_Pass.png)
+
+#### BVA Summary
+| Feature | Checks | Pass | Fail |
+|---|---|---|---|
+| Age – API | 6 | 4 | 2 |
+| Age – UI | 6 | 4 | 2 |
+| Password – API | 3 | 2 | 1 |
+| Password – UI | 3 | 3 | 0 |
+| Login rate limit | 3 | 3 | 0 |
+| **Total** | **21** | **16** | **5** |
+
+**Defects found by BVA:**
+- **DEF-04:** Age outside the valid range 4–120 (3 and 121) is accepted by both the UI and the API. The age input has `min="4" max="120"`, but the form uses `noValidate` and the code only checks `age <= 0`. The backend has no age range check.
+- **DEF-03 (confirmed again):** The API accepts a 5-character password (BVA-P1), while the UI correctly rejects it. This confirms that password length is validated only on the client side.
+
+**Observation:** The login rate limiter works exactly at its boundary. Attempts 1–60 are processed, and attempt 61 is blocked with HTTP 429.
