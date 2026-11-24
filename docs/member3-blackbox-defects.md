@@ -277,6 +277,11 @@ Tool: Postman Collection Runner – `POST /api/auth/login` with a wrong password
 **Summary:** 6 defects – 2 Critical, 3 Major, 1 Minor.
 All six defects come from missing server-side checks: input validation (DEF-01 to DEF-04) or access control and input sanitisation (DEF-05, DEF-06).
 
+**Status of open defects:** DEF-03 was selected for the full lifecycle demonstration and is now Closed. The remaining five defects stay Open in the backlog, prioritised by severity for the development team:
+1. DEF-05 (#11) and DEF-06 (#12) – Critical security issues; recommended to fix first.
+2. DEF-01 (#7) and DEF-02 (#8) – Major; one shared fix (server-side email format validation).
+3. DEF-04 (#10) – Minor; add an age range check (4–120) on the server and remove `noValidate` from the form.
+
 ![GitHub Issues List](../report-screenshots/3.8_GitHub_Issues_List.png)
 
 ### 3. Root Cause Analysis (RCA)
