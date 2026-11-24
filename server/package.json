@@ -32,7 +32,29 @@
   },
   "devDependencies": {
     "jest": "^30.5.2",
+    "jest-html-reporters": "^3.1.7",
     "nodemon": "^3.1.14",
     "supertest": "^7.3.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "lcov",
+      "text"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-html-reporters",
+        {
+          "publicPath": "./coverage",
+          "filename": "qa-test-report.html",
+          "pageTitle": "EC4206 Automated API QA Report",
+          "expand": true
+        }
+      ]
+    ]
   }
 }

@@ -31,6 +31,10 @@ jobs:
         working-directory: ./server
         run: npm install
 
+      - name: Security Dependency Audit (SCA)
+        working-directory: ./server
+        run: npm audit --audit-level=critical || true
+
       - name: Run Automated API Tests with Coverage
         working-directory: ./server
         env:
@@ -38,6 +42,13 @@ jobs:
           MONGO_URI: mongodb://127.0.0.1:27017/cylixlab_test
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: npm test
+
+      - name: Upload Interactive HTML QA Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ec4206-html-qa-report
+          path: server/coverage/qa-test-report.html
 
       - name: Cache SonarQube packages
         uses: actions/cache@v4
