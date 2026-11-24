@@ -28,6 +28,10 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email and password must be valid strings.' });
     }
 
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+    }
+
     const trimmedEmail = sanitizeString(email).toLowerCase();
     const adminEmail = sanitizeString(process.env.ADMIN_EMAIL || 'ravinduanushka248@gmail.com').toLowerCase();
     if (trimmedEmail === adminEmail) {
