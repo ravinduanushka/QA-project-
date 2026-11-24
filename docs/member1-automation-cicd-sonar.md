@@ -59,9 +59,12 @@ A total of **22 automated test cases** were designed and implemented to validate
 | **AUT-21** | AI Chat | `POST /api/chat` | Empty message payload | 400 Bad Request, message required | 400 Bad Request returned | **Pass** |
 | **AUT-22** | AI Chat | `POST /api/chat/message` | Empty body payload | 400 Bad Request | 400 Bad Request returned | **Pass** |
 
-#### Local Test Automation Evidence
-All 22 automated API tests executed cleanly with 100% pass rate:
+#### Local Test Automation & Code Coverage Evidence
+All 22 automated API tests executed cleanly with a 100% pass rate, generating a comprehensive Jest code coverage report across all backend controllers, routes, models, and configuration:
 
+![Jest API Tests 22 Passed and Coverage](../report-screenshots/3.6_Jest_API_Tests_22_Passed_Coverage.png)
+
+*Supplementary Evidence of Local Test Suite Execution:*  
 ![Local API Automation Tests Pass](../report-screenshots/3.6_Local_API_Automation_Tests_Pass.png)
 
 ---
