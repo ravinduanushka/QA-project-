@@ -250,3 +250,31 @@ Tool: Postman Collection Runner – `POST /api/auth/login` with a wrong password
 - **DEF-06 (Critical – Injection / Data Exposure):** `GET /api/courses/student-submissions` builds a regular expression directly from the `studentEmail` query value without escaping it. The value `.*` matches every student, and the endpoint needs no login, so any visitor can read all students' marks (R6b).
 
 **Observation:** The update-course endpoint enforces authentication and role-based authorization correctly for all four condition combinations.
+
+---
+
+## Section 3.8: Defect Tracking (LO-2, LO-4)
+
+### 1. Defect Tracking Tool and Workflow
+- **Tool:** GitHub Issues in the `QA-project-` repository.
+- **Labels:** GitHub Issues has only Open/Closed states, so custom labels are used to represent severity and each stage of the bug lifecycle.
+  - Severity: `severity:critical`, `severity:major`, `severity:minor`
+  - Lifecycle status: `status:new` → `status:assigned` → `status:in-progress` → `status:fixed` → `status:retest` → `status:closed`
+- **Report format:** Every issue has severity, priority, the test case that found it, the environment, steps to reproduce, expected vs. actual result, screenshot evidence and a suspected cause.
+
+![GitHub Labels](../report-screenshots/3.8_GitHub_Labels.png)
+
+### 2. Defect Log
+| Defect ID | GitHub Issue | Title | Found by | Severity | Priority | Status |
+|---|---|---|---|---|---|---|
+| DEF-01 | [#7](https://github.com/ravinduanushka/QA-project-/issues/7) | Register API accepts email without "@" | EP-E2 | Major | Medium | New |
+| DEF-02 | [#8](https://github.com/ravinduanushka/QA-project-/issues/8) | Register API accepts email without domain | EP-E3 | Major | Medium | New |
+| DEF-03 | [#9](https://github.com/ravinduanushka/QA-project-/issues/9) | Register API accepts password shorter than 6 characters | EP-P2, BVA-P1 | Major | High | New |
+| DEF-04 | [#10](https://github.com/ravinduanushka/QA-project-/issues/10) | Age outside 4–120 accepted by UI and API | BVA-A1, BVA-A6 | Minor | Low | New |
+| DEF-05 | [#11](https://github.com/ravinduanushka/QA-project-/issues/11) | Anyone can create a course without login | Decision Table R5 | Critical | High | New |
+| DEF-06 | [#12](https://github.com/ravinduanushka/QA-project-/issues/12) | Student submissions endpoint leaks all students' marks | Decision Table R6b | Critical | High | New |
+
+**Summary:** 6 defects – 2 Critical, 3 Major, 1 Minor.
+All six defects come from missing server-side checks: input validation (DEF-01 to DEF-04) or access control and input sanitisation (DEF-05, DEF-06).
+
+![GitHub Issues List](../report-screenshots/3.8_GitHub_Issues_List.png)
