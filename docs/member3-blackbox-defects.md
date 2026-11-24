@@ -278,3 +278,69 @@ Tool: Postman Collection Runner – `POST /api/auth/login` with a wrong password
 All six defects come from missing server-side checks: input validation (DEF-01 to DEF-04) or access control and input sanitisation (DEF-05, DEF-06).
 
 ![GitHub Issues List](../report-screenshots/3.8_GitHub_Issues_List.png)
+
+### 3. Root Cause Analysis (RCA)
+Two significant defects were analysed: one Critical security defect (DEF-05) and one Major validation defect (DEF-03).
+
+#### RCA 1: DEF-05 – Anyone can create a course without login ([#11](https://github.com/ravinduanushka/QA-project-/issues/11))
+
+**Problem statement:** `POST /api/courses` creates a course for an anonymous user (201 Created without a token), while `PUT` and `DELETE` on the same resource correctly return 401/403.
+
+**5 Whys**
+| # | Why? | Answer |
+|---|---|---|
+| 1 | Why can an anonymous user create a course? | The `POST /api/courses` request is accepted without any token. |
+| 2 | Why is it accepted without a token? | In `server/src/routes/courseRoutes.js`, `router.post('/', createCourse)` has no `protect` or `authorize(...)` middleware, unlike the `PUT` and `DELETE` routes. |
+| 3 | Why does the controller still work without a logged-in user? | `createCourse` falls back to `req.body.instructor` or a hard-coded ID `650000000000000000000000` when `req.user` is missing, so it was written to run without authentication. |
+| 4 | Why was this not noticed? | The frontend never calls `POST /api/courses`, so the endpoint is unused, leftover code. Nobody tested it, and the existing automated tests only check 401 on `/api/auth/profile`. |
+| 5 | Why is there no test or review rule for it? | The team has no rule that every write endpoint (POST/PUT/DELETE) must be protected and must have an "unauthenticated → 401" test. |
+
+**Root cause:** Missing authorization middleware on an unused endpoint, combined with no process rule or test for access control on write routes.
+
+**Fix:**
+- Add `protect, authorize('instructor', 'admin')` to `router.post('/', ...)`.
+- Remove the hard-coded instructor fallback in `createCourse`, and take the instructor from `req.user.id`.
+- Remove unused endpoints that the frontend does not need.
+
+**Prevention:**
+- Add a Supertest test for every write route: no token → 401, student token → 403.
+- Add "every POST/PUT/DELETE route has auth middleware" to the Pull Request review checklist.
+- Lesson from the Knight Capital case (2012): unused code still runs in production and can cause serious failures.
+
+#### RCA 2: DEF-03 – Register API accepts password shorter than 6 characters ([#9](https://github.com/ravinduanushka/QA-project-/issues/9))
+
+**Problem statement:** The register form rejects a 5-character password, but a direct API call (`POST /api/auth/register`) accepts it and creates the account.
+
+**5 Whys**
+| # | Why? | Answer |
+|---|---|---|
+| 1 | Why does the API accept a 5-character password? | `registerUser` in `server/src/controllers/authController.js` only checks that the password is a non-empty string. |
+| 2 | Why is there no length check on the server? | The 6-character rule was implemented only in `frontend/src/components/Register.jsx` (`password.length < 6`). |
+| 3 | Why only in the frontend? | Developers assumed every user registers through the UI form, so the API was treated as trusted. |
+| 4 | Why was this not caught? | There are no backend tests for registration rules, and the `User` model has no `minlength` for the password. |
+| 5 | Why is there no rule for this? | Requirements and acceptance criteria did not state that all input rules must be enforced on the server, and there is no shared validation layer. |
+
+**Root cause:** Validation exists only on the client side. The server trusts input that an attacker can send directly without using the UI.
+
+**Fix:** Add a server-side check in `registerUser`: return 400 "Password must be at least 6 characters." when `password.length < 6`.
+
+**Prevention:**
+- Validate every input on the server (for example with a shared schema using Joi or express-validator) and keep the frontend check only for user experience.
+- Add API tests for the password boundaries 5 / 6 / 7 (BVA-P1 to BVA-P3) to the CI pipeline.
+- Add "server-side validation" to the acceptance criteria of user stories.
+
+#### Fishbone (Ishikawa) Diagram – DEF-03
+```mermaid
+flowchart LR
+    P1["People: assumed users only register through the UI"] --> D
+    P2["Process: no server-side validation in acceptance criteria / review checklist"] --> D
+    P3["Code / Design: length check only in Register.jsx, none in authController.js or User model"] --> D
+    P4["Tools & Data: no backend tests for password boundaries"] --> D
+    P5["Environment: API can be called directly with Postman / curl, bypassing the UI"] --> D
+    D(["DEF-03: API accepts password shorter than 6 characters"])
+```
+
+#### Common Pattern Across All Defects
+All six defects share the same root cause: **the backend trusts client input.**
+- Validation exists only in the UI (DEF-01 to DEF-04).
+- Access control or input sanitisation is missing (DEF-05, DEF-06).
