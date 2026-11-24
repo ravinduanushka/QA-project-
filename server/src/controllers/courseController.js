@@ -8,12 +8,18 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
+// Helper to escape regex special characters against ReDoS vulnerabilities
+const escapeRegex = (str) => {
+  if (typeof str !== 'string') return '';
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
+
 const uploadDir = path.join(__dirname, '../../uploads');
 try {
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
-} catch {
+} catch (dirErr) {
   // Ignored in read-only environments like Vercel
 }
 
@@ -93,7 +99,15 @@ const getCourseById = async (req, res) => {
 
 const updateCourse = async (req, res) => {
   try {
-    const course = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { title, description, category, price, instructor } = req.body;
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (category !== undefined) updateData.category = category;
+    if (price !== undefined) updateData.price = price;
+    if (instructor !== undefined) updateData.instructor = instructor;
+
+    const course = await Course.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!course) {
       return res.status(404).json({ success: false, message: 'Course not found' });
     }
@@ -143,7 +157,9 @@ const uploadLearningPathPdf = async (req, res) => {
       const content = buffer.toString('latin1');
       const matches = content.match(/\/Type\s*\/Page[^s]/g);
       if (matches && matches.length > 0) pageCount = matches.length;
-    } catch {}
+    } catch (_countErr) {
+      pageCount = 12;
+    }
 
     // 1. Upload to Cloudinary
     let cloudUrl = null;
@@ -186,7 +202,9 @@ const uploadLearningPathPdf = async (req, res) => {
       if (fs.existsSync(lpMetaFile)) {
         try {
           meta = JSON.parse(fs.readFileSync(lpMetaFile, 'utf8'));
-        } catch {}
+        } catch (_metaErr) {
+          meta = {};
+        }
       }
       meta[safePathId] = {
         pathId: safePathId,
@@ -195,7 +213,7 @@ const uploadLearningPathPdf = async (req, res) => {
         updatedAt: new Date().toISOString(),
       };
       fs.writeFileSync(lpMetaFile, JSON.stringify(meta, null, 2));
-    } catch {
+    } catch (_fsErr) {
       // Ignore read-only errors on serverless
     }
 
@@ -224,7 +242,9 @@ const getLearningPathPdf = async (req, res) => {
         const content = fs.readFileSync(targetPath, 'latin1');
         const matches = content.match(/\/Type\s*\/Page[^s]/g);
         if (matches && matches.length > 0) pageCount = matches.length;
-      } catch {}
+      } catch (_pageErr) {
+        pageCount = 12;
+      }
     }
 
     // 1. Check MongoDB only if connected to avoid buffer freeze
@@ -243,7 +263,9 @@ const getLearningPathPdf = async (req, res) => {
     if (fs.existsSync(lpMetaFile)) {
       try {
         meta = JSON.parse(fs.readFileSync(lpMetaFile, 'utf8'));
-      } catch {}
+      } catch (_readErr) {
+        meta = {};
+      }
     }
 
     const host = req.get('host') || '';
@@ -522,7 +544,9 @@ Output STRICT JSON array only:`;
       if (fs.existsSync(asgMetaFile)) {
         try {
           meta = JSON.parse(fs.readFileSync(asgMetaFile, 'utf8'));
-        } catch {}
+        } catch (_metaErr) {
+          meta = {};
+        }
       }
       meta[safeAsgId] = {
         assignmentId: safeAsgId,
@@ -532,7 +556,7 @@ Output STRICT JSON array only:`;
         updatedAt: new Date().toISOString(),
       };
       fs.writeFileSync(asgMetaFile, JSON.stringify(meta, null, 2));
-    } catch {
+    } catch (_fsErr) {
       // Ignore read-only errors on serverless
     }
 
@@ -571,7 +595,9 @@ const getAssignmentPdf = async (req, res) => {
     if (fs.existsSync(asgMetaFile)) {
       try {
         meta = JSON.parse(fs.readFileSync(asgMetaFile, 'utf8'));
-      } catch {}
+      } catch (_metaErr) {
+        meta = {};
+      }
     }
 
     const host = req.get('host') || '';
@@ -629,9 +655,9 @@ const submitAssignmentProgress = async (req, res) => {
 
     // 1. Save / Update in MongoDB (matches either by studentEmail or studentName)
     try {
-      const orConditions = [{ studentEmail: new RegExp(`^${email.trim()}$`, 'i') }];
+      const orConditions = [{ studentEmail: new RegExp(`^${escapeRegex(email.trim())}$`, 'i') }];
       if (name && name.toLowerCase() !== 'student') {
-        orConditions.push({ studentName: new RegExp(`^${name.trim()}$`, 'i') });
+        orConditions.push({ studentName: new RegExp(`^${escapeRegex(name.trim())}$`, 'i') });
       }
 
       await AssignmentSubmission.findOneAndUpdate(
@@ -652,7 +678,9 @@ const submitAssignmentProgress = async (req, res) => {
       if (fs.existsSync(submissionsFile)) {
         try {
           submissions = JSON.parse(fs.readFileSync(submissionsFile, 'utf8'));
-        } catch {}
+        } catch (parseErr) {
+          submissions = [];
+        }
       }
 
       const existingIndex = submissions.findIndex((s) => {
@@ -669,7 +697,7 @@ const submitAssignmentProgress = async (req, res) => {
       }
 
       fs.writeFileSync(submissionsFile, JSON.stringify(submissions, null, 2));
-    } catch {
+    } catch (fsErr) {
       // Ignored on read-only environments
     }
 
@@ -711,7 +739,9 @@ const getAdminAssignmentStats = async (req, res) => {
             }
           });
         }
-      } catch {}
+      } catch (jsonErr) {
+        // Fallback gracefully if JSON parsing fails
+      }
     }
 
     const submissions = Array.from(submissionMap.values());
@@ -752,10 +782,10 @@ const getStudentSubmissions = async (req, res) => {
     try {
       const orConditions = [];
       if (emailTrim) {
-        orConditions.push({ studentEmail: new RegExp(`^${emailTrim}$`, 'i') });
+        orConditions.push({ studentEmail: new RegExp(`^${escapeRegex(emailTrim)}$`, 'i') });
       }
       if (nameTrim && nameTrim !== 'student') {
-        orConditions.push({ studentName: new RegExp(`^${nameTrim}$`, 'i') });
+        orConditions.push({ studentName: new RegExp(`^${escapeRegex(nameTrim)}$`, 'i') });
       }
 
       if (orConditions.length > 0) {
@@ -802,14 +832,18 @@ const getStudentSubmissions = async (req, res) => {
     let uploadedAssignmentIds = [];
     try {
       uploadedAssignmentIds = await Assignment.find().distinct('assignmentId');
-    } catch {}
+    } catch (_dbErr) {
+      uploadedAssignmentIds = [];
+    }
 
     if (!uploadedAssignmentIds || uploadedAssignmentIds.length === 0) {
       if (fs.existsSync(asgMetaFile)) {
         try {
           const meta = JSON.parse(fs.readFileSync(asgMetaFile, 'utf8'));
           uploadedAssignmentIds = Object.keys(meta);
-        } catch {}
+        } catch (_parseErr) {
+          uploadedAssignmentIds = [];
+        }
       }
     }
 

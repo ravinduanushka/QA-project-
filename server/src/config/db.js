@@ -4,7 +4,9 @@ const dns = require('dns');
 // Ensure reliable DNS resolution for mongodb+srv:// records
 try {
   dns.setServers(['8.8.8.8', '1.1.1.1']);
-} catch {}
+} catch (dnsErr) {
+  // Fallback to system default DNS resolution
+}
 
 let cachedConn = null;
 let cachedPromise = null;
