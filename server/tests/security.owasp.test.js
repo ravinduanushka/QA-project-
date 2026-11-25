@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'owasp-test-secret';
+// Keep these checks independent of MongoDB (no 8 s connection wait)
+process.env.MONGO_URI = '';
 
 const app = require('../server');
 const { protect } = require('../src/middlewares/authMiddleware');

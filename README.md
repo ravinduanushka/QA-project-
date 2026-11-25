@@ -23,7 +23,7 @@ This section summarises the QA work done on CylixLab by the four-member team. Ea
 ### QA Approach
 - **Isolated system under test:** the app was copied into this repository. Tests use the `cylixlab_test` MongoDB database, and secrets live only in `server/.env` and GitHub Actions secrets (never committed).
 - **Branch per member:** each member worked on their own branch and merged into `main` through Pull Requests.
-- **Quality gate:** every push and Pull Request to `main` runs the CI pipeline, which runs the automated test suite and a SonarQube scan.
+- **Quality gate:** every push and Pull Request to `main` runs the CI pipeline, which runs the automated test suite and a SonarQube scan. A second pipeline, the security gate, runs the OWASP security tests, an `npm audit` dependency check and all Cucumber scenarios.
 
 ### Sections and Reports
 
@@ -36,26 +36,29 @@ This section summarises the QA work done on CylixLab by the four-member team. Ea
 | 3.5 | TDD (Jest, Red → Green → Refactor) and BDD (Gherkin + Cucumber) | [Member 4](docs/member4-whitebox-bdd-perf.md) |
 | 3.6 | Test automation (Jest + Supertest API tests) and CI/CD with GitHub Actions | [Member 1](docs/member1-automation-cicd-sonar.md) |
 | 3.7 | Performance and load testing with Apache JMeter (50 users, APDEX 0.938) | [Member 4](docs/member4-whitebox-bdd-perf.md) |
+| 3.7 | Security testing: OWASP Top 10 (A01, A03, A05, A06, A07), 21 automated security tests, 7 BDD access-control scenarios, 10 findings | [Member 4](docs/member4-owasp-security.md) |
 | 3.8 | Defect tracking in GitHub Issues, Root Cause Analysis, full bug lifecycle | [Member 3](docs/member3-blackbox-defects.md) |
 | 3.9 | Quality metrics and SonarQube static analysis | [Member 1](docs/member1-automation-cicd-sonar.md) |
 | 3.10 | Case study: Agile and DevOps reflection | [Member 4](docs/member4-whitebox-bdd-perf.md) |
 
 ### Key Results
-- **44 automated Jest tests** in `server/tests/`: 22 API automation tests, 7 white-box tests, 13 TDD unit tests and 2 defect regression tests.
-- **7 BDD scenarios (21 steps)** in `server/features/`, all passing with Cucumber.
+- **65 automated Jest tests** in `server/tests/`: 22 API automation tests, 7 white-box tests, 13 TDD unit tests, 2 defect regression tests and 21 OWASP security tests.
+- **14 BDD scenarios (49 steps)** in `server/features/`: 7 registration validation scenarios and 7 security access-control scenarios, all passing with Cucumber.
 - **100% statement, branch, function and line coverage** of `server/src/middlewares/authMiddleware.js`.
 - **6 defects** logged as GitHub Issues (2 Critical, 3 Major, 1 Minor). DEF-03 (password shorter than 6 characters was accepted) was fixed, verified by regression tests and closed.
 - **Load test:** 250 requests from 50 concurrent users on `/api/courses`, average response 152.49 ms, APDEX 0.938.
 - **SonarQube:** reported issues reduced from 4,100 to 4, and duplication from 40% to 0%.
+- **Security (OWASP Top 10):** 5 categories checked (A01, A03, A05, A06, A07). The tests found 10 security findings (SEC-01 to SEC-10): 4 Critical, 2 Major and 4 Minor. They include admin and upload routes reachable without login and 26 vulnerable npm packages.
 
 ### QA Project Structure
 ```
 .github/workflows/ci-qa.yml   CI pipeline: Jest tests, HTML report artifact, SonarQube scan
+.github/workflows/security-qa.yml  Security gate: OWASP tests, npm audit, all Cucumber scenarios
 docs/                         Member reports (sections 3.1 – 3.10)
 report-screenshots/           Screenshot evidence for every section
 jmeter/                       JMeter test plan (.jmx), results (.jtl) and HTML dashboard
-server/tests/                 Jest test suites (API, white-box, TDD, defect regression)
-server/features/              Gherkin feature file and Cucumber step definitions
+server/tests/                 Jest test suites (API, white-box, TDD, defect regression, OWASP security)
+server/features/              Gherkin feature files (registration, access control) and Cucumber step definitions
 sonar-project.properties      SonarQube configuration
 ```
 
@@ -72,7 +75,13 @@ npm test
 # Only the white-box and TDD unit tests (no database needed)
 npx jest tests/whitebox.authMiddleware.test.js tests/tdd.validators.test.js
 
-# BDD scenarios with Cucumber (HTML report: server/coverage/cucumber-report.html)
+# Only the OWASP security tests (no database needed)
+npx jest tests/security.owasp.test.js
+
+# Dependency vulnerability check (OWASP A06)
+npm audit
+
+# BDD scenarios with Cucumber, needs Node.js 22, 24 or 26+ (HTML report: server/coverage/cucumber-report.html)
 npm run bdd -- --format progress --format html:coverage/cucumber-report.html
 ```
 
