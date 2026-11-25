@@ -2,6 +2,8 @@
 const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
+const fs = require('fs');
+const path = require('path');
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'owasp-test-secret';
 // Keep these checks independent of MongoDB (no 8 s connection wait)
@@ -75,24 +77,80 @@ describe('A01 Broken Access Control – protected course routes', () => {
 describe('A01 Broken Access Control – route audit (static check)', () => {
   const routes = [...listRoutes(authRoutes, '/api/auth'), ...listRoutes(courseRoutes, '/api/courses')];
 
-  it('SEC-T06: only the expected routes are guarded by the protect middleware', () => {
+  // Routes fixed for SEC-01 to SEC-04 (were open before)
+  const fixedRoutes = [
+    'GET /api/auth/stats', // SEC-01
+    'POST /api/courses', // SEC-02
+    'POST /api/courses/learning-path-pdf', // SEC-03
+    'POST /api/courses/assignment-pdf', // SEC-03
+    'GET /api/courses/admin-assignment-stats', // SEC-04
+  ];
+
+  it('SEC-T06: exactly the expected routes are guarded by the protect middleware', () => {
     const guarded = routes.filter((r) => r.isProtected).map((r) => r.route).sort();
     expect(guarded).toEqual(
-      ['DELETE /api/courses/:id', 'GET /api/auth/profile', 'PUT /api/courses/:id'].sort()
+      ['DELETE /api/courses/:id', 'GET /api/auth/profile', 'PUT /api/courses/:id', ...fixedRoutes].sort()
     );
   });
 
-  // Known findings: remove a route once it is protected
-  it('SEC-T07: admin and write routes that are currently reachable without login (known findings)', () => {
-    const sensitive = [
-      'GET /api/auth/stats', // SEC-01
-      'POST /api/courses', // SEC-02
-      'POST /api/courses/learning-path-pdf', // SEC-03
-      'POST /api/courses/assignment-pdf', // SEC-03
-      'GET /api/courses/admin-assignment-stats', // SEC-04
-    ];
+  // Retest: fails if someone removes protect from a fixed route again
+  it('SEC-T07: admin and write routes found in SEC-01 to SEC-04 now require login (retest)', () => {
     const unprotected = routes.filter((r) => !r.isProtected).map((r) => r.route);
-    sensitive.forEach((route) => expect(unprotected).toContain(route));
+    fixedRoutes.forEach((route) => expect(unprotected).not.toContain(route));
+  });
+});
+
+describe('A01 Broken Access Control – retest of fixed findings (SEC-01 to SEC-04)', () => {
+  const studentToken = () => signToken({ id: 'student1', role: 'student' });
+
+  it.each([
+    ['get', '/api/auth/stats'],
+    ['post', '/api/courses'],
+    ['post', '/api/courses/learning-path-pdf'],
+    ['post', '/api/courses/assignment-pdf'],
+    ['get', '/api/courses/admin-assignment-stats'],
+  ])('SEC-T22: %s %s without a token returns 401', async (method, url) => {
+    const res = await request(app)[method](url).send({});
+    expect(res.statusCode).toBe(401);
+    expect(res.body.success).toBe(false);
+  });
+
+  it.each([
+    ['get', '/api/auth/stats'],
+    ['post', '/api/courses/learning-path-pdf'],
+    ['get', '/api/courses/admin-assignment-stats'],
+  ])('SEC-T23: %s %s with a student token returns 403', async (method, url) => {
+    const res = await request(app)[method](url).set('Authorization', `Bearer ${studentToken()}`).send({});
+    expect(res.statusCode).toBe(403);
+  });
+
+  // Runs the route's real middlewares (not the DB controller) with an admin token
+  it('SEC-T24: an admin token passes the access checks on GET /api/auth/stats', async () => {
+    const layer = authRoutes.stack.find((l) => l.route && l.route.path === '/stats');
+    const guards = layer.route.stack.slice(0, -1).map((s) => s.handle);
+    const req = { headers: { authorization: `Bearer ${signToken({ id: 'admin1', role: 'admin' })}` } };
+    const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+    for (const guard of guards) {
+      const next = jest.fn();
+      await guard(req, res, next);
+      expect(next).toHaveBeenCalled();
+    }
+    expect(res.status).not.toHaveBeenCalled();
+    expect(req.user.role).toBe('admin');
+  });
+});
+
+describe('A07 Identification & Authentication Failures – hardcoded credentials (SEC-11)', () => {
+  // The frontend is shipped to every browser, so it must hold no admin secret
+  const loginSource = fs.readFileSync(
+    path.join(__dirname, '../../frontend/src/components/Login.jsx'),
+    'utf8'
+  );
+
+  it('SEC-T25: the login page has no hardcoded admin password or fake admin token', () => {
+    expect(loginSource).not.toMatch(/adminratemaths/);
+    expect(loginSource).not.toMatch(/admin_secure_token/);
   });
 });
 

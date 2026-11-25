@@ -36,19 +36,19 @@ This section summarises the QA work done on CylixLab by the four-member team. Ea
 | 3.5 | TDD (Jest, Red → Green → Refactor) and BDD (Gherkin + Cucumber) | [Member 4](docs/member4-whitebox-bdd-perf.md) |
 | 3.6 | Test automation (Jest + Supertest API tests) and CI/CD with GitHub Actions | [Member 1](docs/member1-automation-cicd-sonar.md) |
 | 3.7 | Performance and load testing with Apache JMeter (50 users, APDEX 0.938) | [Member 4](docs/member4-whitebox-bdd-perf.md) |
-| 3.7 | Security testing: OWASP Top 10 (A01, A03, A05, A06, A07), 21 automated security tests, 7 BDD access-control scenarios, 10 findings | [Member 4](docs/member4-owasp-security.md) |
+| 3.7 | Security testing: OWASP Top 10 (A01, A03, A05, A06, A07), 31 automated security tests, 7 BDD access-control scenarios, 11 findings (5 fixed and retested) | [Member 4](docs/member4-owasp-security.md) |
 | 3.8 | Defect tracking in GitHub Issues, Root Cause Analysis, full bug lifecycle | [Member 3](docs/member3-blackbox-defects.md) |
 | 3.9 | Quality metrics and SonarQube static analysis | [Member 1](docs/member1-automation-cicd-sonar.md) |
 | 3.10 | Case study: Agile and DevOps reflection | [Member 4](docs/member4-whitebox-bdd-perf.md) |
 
 ### Key Results
-- **65 automated Jest tests** in `server/tests/`: 22 API automation tests, 7 white-box tests, 13 TDD unit tests, 2 defect regression tests and 21 OWASP security tests.
+- **75 automated Jest tests** in `server/tests/`: 22 API automation tests, 7 white-box tests, 13 TDD unit tests, 2 defect regression tests and 31 OWASP security tests.
 - **14 BDD scenarios (49 steps)** in `server/features/`: 7 registration validation scenarios and 7 security access-control scenarios, all passing with Cucumber.
 - **100% statement, branch, function and line coverage** of `server/src/middlewares/authMiddleware.js`.
 - **6 defects** logged as GitHub Issues (2 Critical, 3 Major, 1 Minor). DEF-03 (password shorter than 6 characters was accepted) was fixed, verified by regression tests and closed.
 - **Load test:** 250 requests from 50 concurrent users on `/api/courses`, average response 152.49 ms, APDEX 0.938.
 - **SonarQube:** reported issues reduced from 4,100 to 4, and duplication from 40% to 0%.
-- **Security (OWASP Top 10):** 5 categories checked (A01, A03, A05, A06, A07). The tests found 10 security findings (SEC-01 to SEC-10): 4 Critical, 2 Major and 4 Minor. They include admin and upload routes reachable without login and 26 vulnerable npm packages.
+- **Security (OWASP Top 10):** 5 categories checked (A01, A03, A05, A06, A07). The tests found 11 security findings (SEC-01 to SEC-11): 5 Critical, 2 Major and 4 Minor. They include admin and upload routes reachable without login, an admin password hardcoded in the frontend, and 26 vulnerable npm packages. The access-control findings and the hardcoded password (SEC-01 to SEC-04, SEC-11) are fixed and retested.
 
 ### QA Project Structure
 ```

@@ -1,6 +1,13 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
+
+// Admin routes are now protected (SEC-01 to SEC-04), so tests sign an admin JWT
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'api-test-secret';
 const app = require('../server');
+
+const adminAuth = () =>
+  `Bearer ${jwt.sign({ id: 'qa-admin', role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '1h' })}`;
 
 describe('API Automation Test Suite', () => {
   let adminToken = '';
@@ -50,7 +57,8 @@ describe('API Automation Test Suite', () => {
 
     it('POST /api/auth/login - should log in dedicated admin successfully with valid credentials', async () => {
       const adminEmail = process.env.ADMIN_EMAIL || 'ravinduanushka248@gmail.com';
-      const adminPassword = process.env.ADMIN_PASSWORD || 'adminratemaths';
+      // SEC-11: never keep the real admin password in source code
+      const adminPassword = process.env.ADMIN_PASSWORD || 'not-the-real-admin-password';
 
       const res = await request(app)
         .post('/api/auth/login')
@@ -119,7 +127,7 @@ describe('API Automation Test Suite', () => {
     });
 
     it('GET /api/auth/stats - should return user statistics', async () => {
-      const res = await request(app).get('/api/auth/stats');
+      const res = await request(app).get('/api/auth/stats').set('Authorization', adminAuth());
 
       expect([200, 500]).toContain(res.statusCode);
       if (res.statusCode === 200) {
@@ -150,6 +158,7 @@ describe('API Automation Test Suite', () => {
     it('POST /api/courses - should create a course', async () => {
       const res = await request(app)
         .post('/api/courses')
+        .set('Authorization', adminAuth())
         .send({
           title: 'Automated QA Testing Fundamentals',
           description: 'Hands-on guide to automated testing with Jest and CI/CD pipelines',
@@ -211,7 +220,9 @@ describe('API Automation Test Suite', () => {
     });
 
     it('GET /api/courses/admin-assignment-stats - should return institutional statistics', async () => {
-      const res = await request(app).get('/api/courses/admin-assignment-stats');
+      const res = await request(app)
+        .get('/api/courses/admin-assignment-stats')
+        .set('Authorization', adminAuth());
 
       expect([200, 500]).toContain(res.statusCode);
       if (res.statusCode === 200) {

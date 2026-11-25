@@ -171,24 +171,7 @@ const Login = () => {
         }
       }, 900);
     } catch (err) {
-      const cleanEmail = (formData.email || '').trim().toLowerCase();
-      if (cleanEmail === 'ravinduanushka248@gmail.com' && formData.password === 'adminratemaths') {
-        const adminObj = {
-          id: 'admin_anushka_cylixlab',
-          name: 'Anushka',
-          email: 'ravinduanushka248@gmail.com',
-          role: 'admin',
-          gender: 'Male',
-        };
-        localStorage.setItem('user', JSON.stringify(adminObj));
-        localStorage.setItem('token', 'admin_secure_token');
-        setMessage('Admin authenticated! Loading Admin Page...');
-        setTimeout(() => {
-          navigate('/admin-dashboard', { replace: true });
-        }, 250);
-        return;
-      }
-
+      // SEC-11 fix: no hardcoded admin login here; the server checks admin credentials
       setError(
         err.response?.data?.message || 'Login failed. Please check your credentials.'
       );
