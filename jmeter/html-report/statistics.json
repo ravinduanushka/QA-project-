@@ -1,0 +1,34 @@
+{
+  "GET Courses API" : {
+    "transaction" : "GET Courses API",
+    "sampleCount" : 250,
+    "errorCount" : 14,
+    "errorPct" : 5.6,
+    "meanResTime" : 152.49200000000002,
+    "medianResTime" : 127.0,
+    "minResTime" : 47.0,
+    "maxResTime" : 1211.0,
+    "pct1ResTime" : 189.0,
+    "pct2ResTime" : 268.49999999999943,
+    "pct3ResTime" : 930.6500000000026,
+    "throughput" : 24.124288333494164,
+    "receivedKBytesPerSec" : 43.57807675142333,
+    "sentKBytesPerSec" : 2.8977416650583807
+  },
+  "Total" : {
+    "transaction" : "Total",
+    "sampleCount" : 250,
+    "errorCount" : 14,
+    "errorPct" : 5.6,
+    "meanResTime" : 152.49200000000002,
+    "medianResTime" : 127.0,
+    "minResTime" : 47.0,
+    "maxResTime" : 1211.0,
+    "pct1ResTime" : 189.0,
+    "pct2ResTime" : 268.49999999999943,
+    "pct3ResTime" : 930.6500000000026,
+    "throughput" : 24.124288333494164,
+    "receivedKBytesPerSec" : 43.57807675142333,
+    "sentKBytesPerSec" : 2.8977416650583807
+  }
+}
