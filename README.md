@@ -4,6 +4,8 @@
 
 > **Live Application:** [https://cylixlab-77bz.vercel.app/](https://cylixlab-77bz.vercel.app/)
 
+> **QA repository:** this repository is an **isolated copy of CylixLab** used for the **EC4206 – Software Testing and Quality Assurance** group project (Department of Electrical and Information Engineering, University of Ruhuna). All testing runs against a separate test database (`cylixlab_test`). The live application and its production database are never touched. See [Software Testing & Quality Assurance](#software-testing--quality-assurance-ec4206) below.
+
 ---
 
 ##  Overview
@@ -11,6 +13,70 @@
 **CylixLab** (*"Learn Smarter. Achieve More"*) is an AI-powered learning management and skill assessment platform designed to connect **Students**, **Parents**, and **Administrators** in one unified digital ecosystem.
 
 
+
+---
+
+##  Software Testing & Quality Assurance (EC4206)
+
+This section summarises the QA work done on CylixLab by the four-member team. Each member's full report, with test cases, results and screenshot evidence, is in the [`docs/`](docs) folder. All screenshots are in [`report-screenshots/`](report-screenshots), named by section (for example `3.4_...png`).
+
+### QA Approach
+- **Isolated system under test:** the app was copied into this repository. Tests use the `cylixlab_test` MongoDB database, and secrets live only in `server/.env` and GitHub Actions secrets (never committed).
+- **Branch per member:** each member worked on their own branch and merged into `main` through Pull Requests.
+- **Quality gate:** every push and Pull Request to `main` runs the CI pipeline, which runs the automated test suite and a SonarQube scan.
+
+### Sections and Reports
+
+| Section | Topic | Report |
+| :--- | :--- | :--- |
+| 3.1 | Introduction, test plan, scope, ISO 25010 quality characteristics | [Member 2](docs/member2-testplan-testcases.md) |
+| 3.2 | STLC mapping and 12 formal test cases | [Member 2](docs/member2-testplan-testcases.md) |
+| 3.3 | Black-box testing: Equivalence Partitioning, Boundary Value Analysis, Decision Table (40 checks) | [Member 3](docs/member3-blackbox-defects.md) |
+| 3.4 | White-box testing: CFG of `protect()` auth middleware, cyclomatic complexity V(G) = 4, 100% statement and branch coverage | [Member 4](docs/member4-whitebox-bdd-perf.md) |
+| 3.5 | TDD (Jest, Red → Green → Refactor) and BDD (Gherkin + Cucumber) | [Member 4](docs/member4-whitebox-bdd-perf.md) |
+| 3.6 | Test automation (Jest + Supertest API tests) and CI/CD with GitHub Actions | [Member 1](docs/member1-automation-cicd-sonar.md) |
+| 3.7 | Performance and load testing with Apache JMeter (50 users, APDEX 0.938) | [Member 4](docs/member4-whitebox-bdd-perf.md) |
+| 3.8 | Defect tracking in GitHub Issues, Root Cause Analysis, full bug lifecycle | [Member 3](docs/member3-blackbox-defects.md) |
+| 3.9 | Quality metrics and SonarQube static analysis | [Member 1](docs/member1-automation-cicd-sonar.md) |
+| 3.10 | Case study: Agile and DevOps reflection | [Member 4](docs/member4-whitebox-bdd-perf.md) |
+
+### Key Results
+- **44 automated Jest tests** in `server/tests/`: 22 API automation tests, 7 white-box tests, 13 TDD unit tests and 2 defect regression tests.
+- **7 BDD scenarios (21 steps)** in `server/features/`, all passing with Cucumber.
+- **100% statement, branch, function and line coverage** of `server/src/middlewares/authMiddleware.js`.
+- **6 defects** logged as GitHub Issues (2 Critical, 3 Major, 1 Minor). DEF-03 (password shorter than 6 characters was accepted) was fixed, verified by regression tests and closed.
+- **Load test:** 250 requests from 50 concurrent users on `/api/courses`, average response 152.49 ms, APDEX 0.938.
+- **SonarQube:** reported issues reduced from 4,100 to 4, and duplication from 40% to 0%.
+
+### QA Project Structure
+```
+.github/workflows/ci-qa.yml   CI pipeline: Jest tests, HTML report artifact, SonarQube scan
+docs/                         Member reports (sections 3.1 – 3.10)
+report-screenshots/           Screenshot evidence for every section
+jmeter/                       JMeter test plan (.jmx), results (.jtl) and HTML dashboard
+server/tests/                 Jest test suites (API, white-box, TDD, defect regression)
+server/features/              Gherkin feature file and Cucumber step definitions
+sonar-project.properties      SonarQube configuration
+```
+
+### Running the QA Tests
+Create `server/.env` first (see [How to Run Locally](#how-to-run-locally)), then from the `server` folder:
+
+```bash
+cd server
+npm install
+
+# All Jest tests with coverage (HTML report: server/coverage/qa-test-report.html)
+npm test
+
+# Only the white-box and TDD unit tests (no database needed)
+npx jest tests/whitebox.authMiddleware.test.js tests/tdd.validators.test.js
+
+# BDD scenarios with Cucumber (HTML report: server/coverage/cucumber-report.html)
+npm run bdd -- --format progress --format html:coverage/cucumber-report.html
+```
+
+The JMeter load test can be opened in Apache JMeter from `jmeter/CylixLab_Load_Test.jmx`. The saved HTML dashboard is in `jmeter/html-report/`.
 
 ---
 
