@@ -1,0 +1,76 @@
+name: EC4206 Security & BDD Gate (Member 4)
+
+# Runs alongside ci-qa.yml; needs no database or secrets
+on:
+  push:
+    branches: [ main, 'member4-**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  owasp-security-tests:
+    name: OWASP Top 10 security tests (Jest + Supertest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run OWASP security tests
+        working-directory: ./server
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-security-test-secret
+        run: npx jest tests/security.owasp.test.js --coverage=false
+
+      - name: Dependency vulnerability report (OWASP A06)
+        working-directory: ./server
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          npm audit --audit-level=critical || true
+
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: server/npm-audit-report.json
+
+  bdd-cucumber:
+    name: BDD scenarios (Cucumber)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install server dependencies
+        working-directory: ./server
+        run: npm ci
+
+      - name: Run all Gherkin scenarios
+        working-directory: ./server
+        env:
+          JWT_SECRET: ci-bdd-test-secret
+        run: |
+          mkdir -p coverage
+          npx cucumber-js --format progress --format html:coverage/cucumber-report.html
+
+      - name: Upload Cucumber HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cucumber-report
+          path: server/coverage/cucumber-report.html
