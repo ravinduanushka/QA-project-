@@ -43,8 +43,10 @@ const Register = () => {
         return;
       }
 
-      if (Number(formData.age) <= 0 || isNaN(Number(formData.age))) {
-        setError('Please enter a valid age.');
+      // DEF-04 (#10): same 4–120 range as the input's min/max and the server check
+      const ageNum = Number(formData.age);
+      if (!Number.isInteger(ageNum) || ageNum < 4 || ageNum > 120) {
+        setError('Age must be between 4 and 120.');
         return;
       }
     } else {

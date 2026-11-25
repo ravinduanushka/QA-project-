@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const connectDB = require('../config/db');
 const jwt = require('jsonwebtoken');
+const { validateEmail, validatePassword, validateAge } = require('../utils/validators');
 
 // Helper function to sanitize string inputs against NoSQL injection
 const sanitizeString = (value) => {
@@ -28,11 +29,20 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Email and password must be valid strings.' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters.' });
+    // DEF-03 (#9): same rule as before, now from the shared TDD validator
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.valid) {
+      return res.status(400).json({ message: passwordCheck.message });
     }
 
     const trimmedEmail = sanitizeString(email).toLowerCase();
+
+    // DEF-01 (#7) and DEF-02 (#8): reject emails without "@" or without a domain
+    const emailCheck = validateEmail(trimmedEmail);
+    if (!emailCheck.valid) {
+      return res.status(400).json({ message: emailCheck.message });
+    }
+
     const adminEmail = sanitizeString(process.env.ADMIN_EMAIL || 'ravinduanushka248@gmail.com').toLowerCase();
     if (trimmedEmail === adminEmail) {
       return res.status(400).json({ message: 'Admin account is dedicated and cannot be registered publicly.' });
@@ -41,6 +51,15 @@ const registerUser = async (req, res) => {
     const sanitizedRole = sanitizeString(role);
     const allowedRoles = ['student', 'parent'];
     const targetRole = allowedRoles.includes(sanitizedRole) ? sanitizedRole : 'student';
+
+    // DEF-04 (#10): a student's age, when given, must be a whole number from 4 to 120
+    const ageGiven = age !== undefined && age !== null && age !== '';
+    if (targetRole === 'student' && ageGiven) {
+      const ageCheck = validateAge(Number(age));
+      if (!ageCheck.valid) {
+        return res.status(400).json({ message: ageCheck.message });
+      }
+    }
 
     // Rule 1: Only one account allowed per role for a given email
     const existingUserWithRole = await User.findOne({
