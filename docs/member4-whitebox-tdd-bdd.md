@@ -97,7 +97,7 @@ The test values are taken from the Section 3.3 EP/BVA test cases, so these valid
 **Red → Green → Refactor cycle**
 | Step | What was done | Result |
 |---|---|---|
-| 1. RED | All 13 tests written first, before `validators.js` existed | All tests fail – `Cannot find module` |
+| 1. RED | All 13 tests written first, before any validator was implemented | All 13 tests fail – `validateX is not a function` |
 | 2. GREEN (password) | Minimum code: `validatePassword()` only | 4 password tests pass, 9 email/age tests still fail |
 | 3. GREEN (all) | Added `validateEmail()` and `validateAge()` with minimum logic | 13 / 13 pass |
 | 4. REFACTOR | Removed the repeated `{ valid: false, message }` objects with `ok()` / `fail()` helpers, and replaced magic numbers with named constants | 13 / 13 still pass – behaviour unchanged |
