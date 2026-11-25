@@ -168,6 +168,8 @@ npm audit
 
 ## 9. Test Evidence (Screenshots)
 
+The API screenshots (headers, injection, 401 and stats) were taken against a local instance of `server.js` on port 5000 started without a database. All of these checks are answered before any database query.
+
 * `report-screenshots/3.7_OWASP_Jest_Security_Tests_21_Pass.png`: all 21 OWASP security tests passing (A01, A03, A05, A07)  
 ![OWASP Jest Security Tests 21 Pass](../report-screenshots/3.7_OWASP_Jest_Security_Tests_21_Pass.png)
 
@@ -177,13 +179,13 @@ npm audit
 * `report-screenshots/3.7_OWASP_A05_Security_Headers.png`: Helmet security headers returned by `GET /` (CSP, HSTS, `nosniff`, `X-Frame-Options`, no `X-Powered-By`)  
 ![A05 Security Headers](../report-screenshots/3.7_OWASP_A05_Security_Headers.png)
 
-* `report-screenshots/3.7_OWASP_A03_NoSQL_Injection_Blocked.png`: login with `{"$gt": ""}` operator objects is rejected with 400 and no token  
+* `report-screenshots/3.7_OWASP_A03_NoSQL_Injection_Blocked.png`: login with `{"$gt": ""}` operator objects is rejected with HTTP 400 and no token is returned  
 ![A03 NoSQL Injection Blocked](../report-screenshots/3.7_OWASP_A03_NoSQL_Injection_Blocked.png)
 
 * `report-screenshots/3.7_OWASP_A01_Update_Without_Token_401.png`: `PUT /api/courses/:id` without a token is rejected with 401  
 ![A01 Update Without Token 401](../report-screenshots/3.7_OWASP_A01_Update_Without_Token_401.png)
 
-* `report-screenshots/3.7_OWASP_A01_SEC01_Admin_Stats_No_Login.png`: finding SEC-01, admin statistics returned with no login  
+* `report-screenshots/3.7_OWASP_A01_SEC01_Admin_Stats_No_Login.png`: finding SEC-01: `GET /api/auth/stats` returns 200 with admin statistics and no login. Without a database the controller returns its built-in fallback numbers; with the database it returns the real counts.  
 ![SEC-01 Admin Stats No Login](../report-screenshots/3.7_OWASP_A01_SEC01_Admin_Stats_No_Login.png)
 
 * `report-screenshots/3.7_OWASP_A06_npm_Audit_Summary.png`: finding SEC-09, `npm audit` summary (26 vulnerabilities: 2 critical, 5 high, 19 moderate)  
