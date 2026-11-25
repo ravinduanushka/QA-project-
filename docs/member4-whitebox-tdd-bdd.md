@@ -83,3 +83,104 @@ Tool: Jest with mocked `req`, `res` and `next` (`server/tests/whitebox.authMiddl
 ![Jest coverage 100%](../report-screenshots/3.4_WhiteBox_Jest_Coverage_100.png)
 
 ![Full test suite pass](../report-screenshots/3.4_WhiteBox_Full_Suite_Pass.png)
+
+
+---
+
+## Section 3.5: TDD / BDD (LO-2, LO-3)
+
+### 1. Test-Driven Development (Jest)
+**Unit under development:** `server/src/utils/validators.js` – `validateEmail()`, `validatePassword()`, `validateAge()`.
+**Test file:** `server/tests/tdd.validators.test.js` (13 unit tests).
+The test values are taken from the Section 3.3 EP/BVA test cases, so these validators directly address defects DEF-01, DEF-02, DEF-03 and DEF-04.
+
+**Red → Green → Refactor cycle**
+| Step | What was done | Result |
+|---|---|---|
+| 1. RED | All 13 tests written first, before `validators.js` existed | All tests fail – `Cannot find module` |
+| 2. GREEN (password) | Minimum code: `validatePassword()` only | 4 password tests pass, 9 email/age tests still fail |
+| 3. GREEN (all) | Added `validateEmail()` and `validateAge()` with minimum logic | 13 / 13 pass |
+| 4. REFACTOR | Removed the repeated `{ valid: false, message }` objects with `ok()` / `fail()` helpers, and replaced magic numbers with named constants | 13 / 13 still pass – behaviour unchanged |
+
+**Unit test cases**
+| TC ID | Function | Input | Expected | Source |
+|---|---|---|---|---|
+| TDD-P1 | validatePassword | `""` | invalid | EP-P3 |
+| TDD-P2 | validatePassword | `abcd1` (5) | invalid | BVA-P1 / DEF-03 |
+| TDD-P3 | validatePassword | `abcd12` (6) | valid | BVA-P2 |
+| TDD-P4 | validatePassword | `12345` (number) | invalid | EP |
+| TDD-E1 | validateEmail | `student@test.com` | valid | EP-E1 |
+| TDD-E2 | validateEmail | `eptst.com` | invalid | EP-E2 / DEF-01 |
+| TDD-E3 | validateEmail | `usr@.com` | invalid | EP-E3 / DEF-02 |
+| TDD-E4 | validateEmail | `""` | invalid | EP-E4 |
+| TDD-A1 | validateAge | `3` | invalid | BVA-A1 / DEF-04 |
+| TDD-A2 | validateAge | `4` | valid | BVA-A2 |
+| TDD-A3 | validateAge | `120` | valid | BVA-A5 |
+| TDD-A4 | validateAge | `121` | invalid | BVA-A6 / DEF-04 |
+| TDD-A5 | validateAge | `"abc"` | invalid | EP |
+
+**Step 1 – RED**
+![TDD Red](../report-screenshots/3.5_TDD_1_Red.png)
+
+**Step 2 – GREEN (password only)**
+![TDD Green Password](../report-screenshots/3.5_TDD_2_Green_Password.png)
+
+**Step 3 – GREEN (all)**
+![TDD Green All](../report-screenshots/3.5_TDD_3_Green_All.png)
+
+**Step 4 – REFACTOR (still green)**
+![TDD Refactor](../report-screenshots/3.5_TDD_4_Refactor_Green.png)
+
+### 2. Behaviour-Driven Development (Cucumber)
+**Tool:** `@cucumber/cucumber` – run with `npm run bdd` inside `server/`.
+**Files:** `server/features/registration_validation.feature` (Gherkin) and `server/features/step_definitions/registration.steps.js` (step definitions).
+
+```gherkin
+Feature: Student registration input validation
+  As a CylixLab student
+  I want my registration details to be checked
+  So that only accounts with valid details are created
+
+  Scenario Outline: Password must have at least 6 characters
+    Given a student enters the password "<password>"
+    When the registration details are validated
+    Then the password should be "<result>"
+
+    Examples:
+      | password | result   |
+      | abcd1    | rejected |
+      | abcd12   | accepted |
+      | abcd123  | accepted |
+
+  Scenario Outline: Student age must be between 4 and 120
+    Given a student enters the age <age>
+    When the registration details are validated
+    Then the age should be "<result>"
+
+    Examples:
+      | age | result   |
+      | 3   | rejected |
+      | 4   | accepted |
+      | 120 | accepted |
+      | 121 | rejected |
+```
+
+- Step values are parameterised with `{string}` and `{int}`, so no values are hard-coded in the step definitions.
+- The Cucumber World (`this`) shares data between the Given, When and Then steps of one scenario.
+- **Result:** 7 scenarios (7 passed), 21 steps (21 passed).
+
+![Cucumber pass](../report-screenshots/3.5_BDD_Cucumber_Pass.png)
+
+![Cucumber HTML report](../report-screenshots/3.5_BDD_Cucumber_HTML_Report.png)
+
+### 3. TDD vs. BDD in this project
+| | TDD (Jest) | BDD (Cucumber) |
+|---|---|---|
+| Written in | JavaScript test code | Plain-language Gherkin |
+| Audience | Developers | Developers, testers and product owners |
+| Focus | Correctness of each function | Business rule: "only valid registration details are accepted" |
+| Value here | Safe refactoring – tests stayed green after the refactor | Living documentation of the registration rules |
+
+**Full suite after all changes:** all Jest tests pass (existing API tests + white-box + TDD).
+
+![Full suite pass](../report-screenshots/3.5_Full_Suite_Pass.png)
