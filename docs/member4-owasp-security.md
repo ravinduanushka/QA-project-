@@ -2,7 +2,7 @@
 
 **Module:** EC4206 – Software Testing and Quality Assurance
 **System under test:** CylixLab backend (`server/`), Express 5 + MongoDB
-**Branch:** `member4-owasp-security-enhancement`
+**Branches:** `member4-owasp-security` (tests and findings, merged in PR #22), `member4-security-fixes` (fixes and retest, Section 6.1)
 **Related:** Part A of Section 3.7 (JMeter load test) is in [member4-whitebox-bdd-perf.md](member4-whitebox-bdd-perf.md).
 
 ---
@@ -36,7 +36,7 @@ Section 3.7 asks for a manual inspection of 1–2 OWASP Top 10 risks. This part 
 
 ## 3. Automated Security Test Cases (Jest + Supertest)
 
-File: [`server/tests/security.owasp.test.js`](../server/tests/security.owasp.test.js), with **21 tests, all passing**.
+File: [`server/tests/security.owasp.test.js`](../server/tests/security.owasp.test.js), with **31 tests, all passing** (21 original tests + 10 retest tests added after the fixes in Section 6.1).
 
 | ID | OWASP | Test | Expected | Actual | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -45,8 +45,8 @@ File: [`server/tests/security.owasp.test.js`](../server/tests/security.owasp.tes
 | SEC-T03 | A01 | Student token updates a course (privilege escalation) | 403 | 403 | Pass |
 | SEC-T04 | A01 | Parent token deletes a course | 403 | 403 | Pass |
 | SEC-T05 | A01 | `GET /api/auth/profile` with no token | 401 | 401 | Pass |
-| SEC-T06 | A01 | Route audit: which routes have `protect` | Only PUT/DELETE course and GET profile | Same | Pass |
-| SEC-T07 | A01 | Route audit: admin/write routes without login | Records findings SEC-01 to SEC-04 | Confirmed | Pass (finding) |
+| SEC-T06 | A01 | Route audit: which routes have `protect` | PUT/DELETE course, GET profile + the 5 fixed routes | Same | Pass |
+| SEC-T07 | A01 | Route audit: SEC-01 to SEC-04 routes now need login (retest) | None left unprotected | None | Pass |
 | SEC-T08 | A07 | JWT signed with an attacker's secret | 401 | 401 | Pass |
 | SEC-T09 | A07 | Unsigned JWT (`alg: none`) claiming `admin` | 401 | 401 | Pass |
 | SEC-T10 | A07 | Expired admin JWT | 401 | 401 | Pass |
@@ -61,8 +61,12 @@ File: [`server/tests/security.owasp.test.js`](../server/tests/security.owasp.tes
 | SEC-T19 | A05 | `X-Frame-Options` (clickjacking) | `SAMEORIGIN` | `SAMEORIGIN` | Pass |
 | SEC-T20 | A05 | `Content-Security-Policy` | `default-src 'self'` | Present | Pass |
 | SEC-T21 | A05 | `Strict-Transport-Security` | `max-age` set | Present | Pass |
+| SEC-T22 (×5) | A01 | Stats, create course, 2 PDF uploads, admin marks with no token | 401 | 401 | Pass |
+| SEC-T23 (×3) | A01 | Stats, PDF upload, admin marks with a student token | 403 | 403 | Pass |
+| SEC-T24 | A01 | Admin token through the real `/stats` middlewares | Allowed, `req.user.role = admin` | Allowed | Pass |
+| SEC-T25 | A07 | `Login.jsx` has no hardcoded admin password or fake token | Not found | Not found | Pass |
 
-**How the route audit works (SEC-T06/T07):** the test reads the Express router stack of `authRoutes` and `courseRoutes` and checks whether the `protect` middleware is in each route's handler chain. This finds missing access control without a running database. If a developer later adds `protect` to one of the listed routes, SEC-T07 fails on purpose. That tells the team to update the list and close the finding, so the test works as a regression guard.
+**How the route audit works (SEC-T06/T07):** the test reads the Express router stack of `authRoutes` and `courseRoutes` and checks whether the `protect` middleware is in each route's handler chain. This finds missing access control without a running database. Before the fixes, SEC-T07 recorded the five open routes as known findings. After the fixes it checks that none of them is open. If a developer removes `protect` from one of these routes, SEC-T06 and SEC-T07 fail, so the tests work as a regression guard.
 
 ---
 
@@ -110,6 +114,7 @@ The automated tests and a manual code review found the following issues. Severit
 | **SEC-08** | A05 | Minor | The JSON body limit is 50 MB on every route, which allows large-payload denial of service. It is only needed for base64 PDF uploads. | `server.js` `express.json({ limit: '50mb' })` |
 | **SEC-09** | A06 | Critical | `npm audit` reports **26 vulnerable packages: 2 critical, 5 high, 19 moderate**. Critical: `mongoose` (direct) and `proxy-addr`. High: `nodemailer`, `cloudinary`, `multer-storage-cloudinary`, `body-parser`, `brace-expansion`. | `npm audit`; CI artifact `npm-audit-report` |
 | **SEC-10** | A07 | Minor | JWTs are valid for 7 days and cannot be revoked (no logout blacklist or refresh token). | `authController.js` `expiresIn: '7d'` |
+| **SEC-11** | A07 | Critical | The admin email and password were hardcoded in `Login.jsx`. If the login API failed, the page logged in as admin with a fake token (`admin_secure_token`). The frontend is sent to every browser, so anyone could read the password. The same password was also the fallback in `api.automation.test.js`. | `Login.jsx` `catch` block; SEC-T25 |
 
 ### What is already secure (positive results)
 
@@ -133,7 +138,24 @@ The automated tests and a manual code review found the following issues. Severit
 | SEC-09 | Run `npm audit fix`, upgrade `mongoose`, `nodemailer` and `cloudinary`, then re-run the test suites. Change the CI step from `|| true` to a failing gate once the critical issues are fixed. |
 | SEC-10 | Shorten the token lifetime (e.g. 1 hour) and add refresh tokens or a logout blacklist. |
 
-These findings are recommendations for the team. This branch does **not** change application code, so no other member's work is affected.
+### 6.1 Fix and Retest (branch `member4-security-fixes`)
+
+The five Critical access-control findings were fixed and retested. The other findings remain recommendations for the team.
+
+| Finding | Fix | Retest | Status |
+| :--- | :--- | :--- | :--- |
+| SEC-01 | `GET /api/auth/stats` now uses `protect, authorize('admin')` | SEC-T07, T22, T23, T24 | Fixed |
+| SEC-02 / DEF-05 | `POST /api/courses` now uses `protect, authorize('instructor', 'admin')`, the same roles as update and delete | SEC-T07, T22 | Fixed |
+| SEC-03 | Both PDF upload routes now use `protect, authorize('admin')`. The check runs **before** the file is parsed. | SEC-T07, T22, T23 | Fixed |
+| SEC-04 | `GET /api/courses/admin-assignment-stats` now uses `protect, authorize('admin')` | SEC-T07, T22, T23 | Fixed |
+| SEC-11 | Removed the hardcoded admin login from `Login.jsx`. Admin login now goes only through the server (`ADMIN_PASSWORD` in `.env`). Replaced the password in the test fallback with a dummy value. | SEC-T25 | Fixed (password must still be changed, see below) |
+
+**Changes needed in the rest of the system:**
+
+- `AdminDashboard.jsx` now sends the admin JWT (`Authorization: Bearer …`) on the four admin calls. Without it, the protected routes would return 401.
+- `api.automation.test.js` (Member 1) signs a test admin JWT for the three routes that are now protected. The expected results are unchanged.
+
+**Still to do:** the old admin password is still in the Git history, so the team must **change `ADMIN_PASSWORD`** on the server. SEC-05 to SEC-10 are not fixed yet.
 
 ---
 
@@ -191,14 +213,25 @@ The API screenshots (headers, injection, 401 and stats) were taken against a loc
 * `report-screenshots/3.7_OWASP_A06_npm_Audit_Summary.png`: finding SEC-09, `npm audit` summary (26 vulnerabilities: 2 critical, 5 high, 19 moderate)  
 ![A06 npm Audit Summary](../report-screenshots/3.7_OWASP_A06_npm_Audit_Summary.png)
 
-* `report-screenshots/3.7_Security_CI_Gate_Pass.png`: the `security-qa.yml` workflow passing on GitHub Actions (both jobs green)  
+* `report-screenshots/3.7_Security_CI_Gate_Pass.png`: GitHub Actions run list. The new **EC4206 Security & BDD Gate (Member 4)** workflow passes on every push to `member4-owasp-security`, on Pull Request #22 and after the merge to `main`. The existing **EC4206 QA Automation & CI Pipeline** also passes on PR #22, so the new tests did not break the team pipeline.  
 ![Security CI Gate Pass](../report-screenshots/3.7_Security_CI_Gate_Pass.png)
 
-* `report-screenshots/3.7_BDD_Security_Cucumber_Pass.png`: Cucumber run in CI with all 14 scenarios passing (7 registration + 7 security)  
+* `report-screenshots/3.7_BDD_Security_Cucumber_Pass.png`: GitHub Actions run #3 of the Security & BDD Gate. Both jobs are green, and the "Run all Gherkin scenarios" step shows **14 scenarios (14 passed)** and **49 steps (49 passed)**: 7 registration and 7 security access-control scenarios on Node.js 22.  
 ![BDD Security Cucumber Pass](../report-screenshots/3.7_BDD_Security_Cucumber_Pass.png)
 
-* `report-screenshots/3.7_Security_PR_Checks_Pass.png`: the Pull Request to `main` with all checks passing before merge  
+* `report-screenshots/3.7_Security_PR_Checks_Pass.png`: Pull Request #22 (`member4-owasp-security` → `main`) merged after **all 5 checks passed**: the team's QA Automation & CI Pipeline and both Security & BDD Gate jobs (OWASP tests and Cucumber).  
 ![Security PR Checks Pass](../report-screenshots/3.7_Security_PR_Checks_Pass.png)
+
+**Fix and retest evidence (Section 6.1):**
+
+* `report-screenshots/3.7_OWASP_Retest_31_Pass.png`: the security suite after the fixes, with 31/31 passing, including SEC-T22 to SEC-T25  
+![OWASP Retest 31 Pass](../report-screenshots/3.7_OWASP_Retest_31_Pass.png)
+
+* `report-screenshots/3.7_OWASP_SEC01_Fixed_401.png`: retest of SEC-01. `GET /api/auth/stats` with no login now returns 401 (before the fix it returned 200).  
+![SEC-01 Fixed 401](../report-screenshots/3.7_OWASP_SEC01_Fixed_401.png)
+
+* `report-screenshots/3.7_OWASP_Fixes_PR_Checks_Pass.png`: the fixes Pull Request with both CI workflows passing  
+![Fixes PR Checks Pass](../report-screenshots/3.7_OWASP_Fixes_PR_Checks_Pass.png)
 
 ---
 
@@ -207,7 +240,8 @@ The API screenshots (headers, injection, 401 and stats) were taken against a loc
 | Deliverable | Result |
 | :--- | :--- |
 | OWASP Top 10 categories covered | 5 (A01, A03, A05, A06, A07) |
-| Automated security tests (Jest + Supertest) | 21 / 21 passing |
+| Automated security tests (Jest + Supertest) | 31 / 31 passing (21 original + 10 retest) |
 | BDD security scenarios (Cucumber) | 7 scenarios, all passing |
-| Security findings | 10 (SEC-01 to SEC-10): 4 Critical, 2 Major, 4 Minor |
+| Security findings | 11 (SEC-01 to SEC-11): 5 Critical, 2 Major, 4 Minor |
+| Findings fixed and retested | 5 (SEC-01, 02, 03, 04, 11) |
 | CI | New `security-qa.yml` gate: security tests, npm audit, all Cucumber scenarios |
