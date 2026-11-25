@@ -40,6 +40,7 @@ flowchart TD
     N7 --> N9
     N8 --> N9
 ```
+![CFG of protect()](../report-screenshots/3.4_CFG_protect.png)
 
 ### 3. Cyclomatic Complexity
 - Nodes **N = 9**, Edges **E = 11** (N1→N2, N2→N3, N2→N4, N3→N4, N4→N5, N4→N6, N6→N7, N6→N8, N5→N9, N7→N9, N8→N9), connected components **P = 1**
