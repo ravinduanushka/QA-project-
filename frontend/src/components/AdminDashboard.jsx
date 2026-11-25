@@ -22,6 +22,11 @@ const DEFAULT_ASSIGNMENTS = [
 
 const Y_TICKS = [30, 24, 18, 12, 6, 0];
 
+// Admin API routes are protected on the server (SEC-01/03/04), so send the JWT
+const authConfig = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+});
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
@@ -60,7 +65,7 @@ const AdminDashboard = () => {
 
   const fetchAssignmentStats = async () => {
     try {
-      const res = await axios.get('/api/courses/admin-assignment-stats');
+      const res = await axios.get('/api/courses/admin-assignment-stats', authConfig());
       let serverStats = [];
       if (res.data && res.data.success && Array.isArray(res.data.stats)) {
         serverStats = res.data.stats;
@@ -91,7 +96,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('/api/auth/stats');
+        const res = await axios.get('/api/auth/stats', authConfig());
         if (res.data && res.data.success) {
           setUserStats({
             studentPct: res.data.studentPct || 60,
@@ -265,7 +270,7 @@ const AdminDashboard = () => {
             pathId,
             fileName: lpFile.name,
             fileData: base64Data,
-          });
+          }, authConfig());
           if (res.data && res.data.url) {
             saveLocallyAndComplete(res.data.url);
             return;
@@ -350,7 +355,7 @@ const AdminDashboard = () => {
             assignmentId: asgId,
             fileName: asgFile.name,
             fileData: base64Data,
-          });
+          }, authConfig());
           if (res.data && res.data.url) {
             saveAsgLocallyAndComplete(res.data.url, res.data.questions || []);
             return;
