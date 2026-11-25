@@ -285,11 +285,11 @@ The team utilized modern DevOps principles to guarantee system stability and rel
 
 ## Member 4 – Summary of Deliverables
 | Task (from Assignment Specification) | Deliverable / Coverage | Status |
+| :--- | :--- | :--- |
 | **3.4 White-Box Testing** | CFG of `protect()` middleware, V(G) = 4, 4 basis paths, 7 Jest tests (WB-01..WB-07) | Completed |
 | **3.4 Code Coverage** | `authMiddleware.js` at 100% statement, branch, function and line coverage | Completed |
 | **3.5 TDD (Jest)** | `validators.js` built Red → Green → Refactor with 13 unit tests (TDD-P/E/A) | Completed |
 | **3.5 BDD (Cucumber)** | `registration_validation.feature`: 7 scenarios, 21 steps passed, plus HTML report | Completed |
-| :--- | :--- | :--- |
 | **3.7 Performance & Load Testing** | 50 concurrent users, 10s ramp-up, 250 requests on `/api/courses` via Apache JMeter 5.6.3 | Completed |
 | **3.7 APDEX & Latency Analysis** | APDEX 0.938, Avg 152.49 ms, Median 127.00 ms, 90th percentile 189.00 ms | Completed |
 | **3.7 Error Identification & RCA** | Identified 14 `HTTP 500` server contention errors (5.60% error rate) with recommendations | Completed |
