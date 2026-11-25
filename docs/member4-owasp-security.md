@@ -230,8 +230,11 @@ The API screenshots (headers, injection, 401 and stats) were taken against a loc
 * `report-screenshots/3.7_OWASP_SEC01_Fixed_401.png`: retest of SEC-01. `GET /api/auth/stats` with no login now returns 401 (before the fix it returned 200).  
 ![SEC-01 Fixed 401](../report-screenshots/3.7_OWASP_SEC01_Fixed_401.png)
 
-* `report-screenshots/3.7_OWASP_Fixes_PR_Checks_Pass.png`: the fixes Pull Request with both CI workflows passing  
+* `report-screenshots/3.7_OWASP_Fixes_PR_Checks_Pass.png`: Pull Request #23 (`member4-security-fixes` → `main`) with **all 5 checks passing**. The team's QA Automation & CI Pipeline runs the API tests against MongoDB, so this also shows the fixes did not break Member 1's tests.  
 ![Fixes PR Checks Pass](../report-screenshots/3.7_OWASP_Fixes_PR_Checks_Pass.png)
+
+* `report-screenshots/3.7_OWASP_Fixes_PR_Ready_To_Merge.png`: Pull Request #23 with its 4 commits (route fixes, frontend fix, retest, docs), "All checks have passed" and "No conflicts with base branch"  
+![Fixes PR Ready To Merge](../report-screenshots/3.7_OWASP_Fixes_PR_Ready_To_Merge.png)
 
 ---
 
